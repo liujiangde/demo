@@ -8,6 +8,10 @@
     background-size: cover;
     justify-content: space-around;
 }
+span{
+    font-size: 1.4rem;
+    color: aliceblue;
+}
 .key{
     height: 70px;
     width: 70px;
