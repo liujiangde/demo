@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<!-- 仿照的轮子 2021-12-22号 https://github.com/sindresorhus/delay/blob/main/index.js -->
+<!-- 思路是跟着 https://juejin.cn/post/7042461373904715812 -->
+
+  <link rel="stylesheet" href="./index.css">
+
+<body>
+  <!-- <div class="test">
+    <div class="info">1</div>
+    <div class="info">1</div>
+    <div class="info">1</div>
+    <div class="info">1</div>
+    <div class="info">1</div>
+    <div class="info">1</div>
+    <div class="info">1</div>
+    <div class="info">1</div>
+    <div class="info">1</div>
+    <div class="info">1</div>
+    <div class="info">1</div>
+    <div class="info">1</div>
+  </div> -->
+
+    <!-- <script>
+
+// From https://github.com/sindresorhus/random-int/blob/c37741b56f76b9160b0b63dae4e9c64875128146/index.js#L13-L15
+
+// 返回了一个包含min max之间的整数
+const randomInteger = (minimum, maximum) =>
+  Math.floor((Math.random() * (maximum - minimum + 1)) + minimum);
+
+  // 返回promise 执行reject()的报错
+const createAbortError = () => {
+	const error = new Error('Delay aborted');
+	error.name = 'AbortError';
+	return error;
+};
+
+//  question 1  defaultClear  set 这两个东西用  
+
+// createDelay() 返回一个函数定义  willResolve 判断promise的更改到哪个状态
+const createDelay = ({clearTimeout: defaultClear, setTimeout: set, willResolve}) => 
+(ms, {value, signal} = {}) => {
+	if (signal && signal.aborted) {
+		return Promise.reject(createAbortError());
+	}
+
+
+	let timeoutId;
+	let settle;
+	let rejectFn;
+	const clear = defaultClear || clearTimeout;
+
+	const signalListener = () => {
+		clear(timeoutId);
+		rejectFn(createAbortError());
+	};
+
+	const cleanup = () => {
+		if (signal) {
+			signal.removeEventListener('abort', signalListener);
+		}
+	};
+
+	const delayPromise = new Promise((resolve, reject) => {
+		settle = () => {
+			cleanup();
+			if (willResolve) {
+				resolve(value);
+			} else {
+				reject(value);
+			}
+		};
+
+		rejectFn = reject;
+		timeoutId = (set || setTimeout)(settle, ms);
+	});
+
+	if (signal) {
+		signal.addEventListener('abort', signalListener, {once: true});
+	}
+
+	delayPromise.clear = () => {
+		clear(timeoutId);
+		timeoutId = null;
+		settle();
+	};
+
+	return delayPromise;
+};
+
+const createWithTimers = clearAndSet => {
+	const delay = createDelay({...clearAndSet, willResolve: true});
+	delay.reject = createDelay({...clearAndSet, willResolve: false});
+	delay.range = (minimum, maximum, options) => delay(randomInteger(minimum, maximum), options);
+	return delay;
+};
+
+const delay = createWithTimers();
+delay.createWithTimers = createWithTimers;
+
+module.exports = delay;
+// TODO: Remove this for the next major release
+module.exports.default = delay;
+
+    </script> -->
+
+
+
+    <script>
+
+const randomInteger = (minimum, maximum) =>
+            Math.floor((Math.random() * (maximum - minimum + 1)) + minimum);
+
+
+      const delay = (ms, {value,willResolve} )=> 
+          new Promise((resolve, reject) => {
+              setTimeout(() => {
+                if(willResolve){
+                  resolve("resolve" + value);
+                }
+                 else{
+                  reject("reject" + value)
+                 }
+              }, ms)
+          })
+
+        const event = async () =>{ 
+          const resp = await  delay(3000,{ value : '结果',willResolve: true})
+        } 
+        // event()
+
+
+        // --------------------分割线----------------
+
+
+          // delay函数 经过函数柯里化 ： 先确定延迟的时间前提下，然后再确定延迟时间和返回的值
+          // ps： 不理解为啥是先传willResolve 而不是ms
+        
+         const  delayKL = (willResolve) => ( ms, value) => {
+           // 犯了一个错误， 删除了return 会导致直接执行了new 操作，
+         return new Promise((resolve, reject) => {
+              setTimeout(() => {
+                if(willResolve){
+                  resolve(value);
+                }
+                 else{
+                  reject(value)
+                 }
+              }, ms)
+          })
+         }
+
+      const delayCreate = ()=> {
+        const  delay = delayKL(true)
+        delay.reject = delayKL(false)
+        delay.range = (min,max,options) => delay(randomInteger(min,max),options)
+        // delay(1,"hah1")
+        // delay.reject(0,"hahah") 
+        return delay;
+      }
+      const delay2 = delayCreate()
+      // delayCreate().reject(0,"hahah")
+      // delayCreate()(1,"hha") 
+      // const delay2 = delayCreate()
+      // delayCreate().range(1,12,"hahahha")
+
+      const event1 = async () => {
+          // const resp = await  delayCreate.range(1000,3000,{ value : '结果'})
+          try {
+            const resp = await  delay2.reject(1000,{ value : '会抛出异常的操作'})
+            // const result2 = await delay2.range(1000, 3000, { value: 'success' });
+            // console.log("result2",result2);
+          } catch (error) {
+            console.log(error);
+          }
+        } 
+        // event1()
+
+        const createDelay = ({willResolve}) => (ms, {value} = {}) => {
+            return new Promise((relove, reject) => {
+                setTimeout(() => {
+                    if(willResolve){
+                        relove(value);
+                    }
+                    else{
+                        reject(value);
+                    }
+                }, ms);
+            });
+        }
+
+        // ------------------分割线--------------
+
+
+// const createDelay1 = ({willResolve}) => (ms, {value} = {}) => {
+//     let timeoutId;
+//     let settle;
+//     const delayPromise = new Promise((resolve, reject) => {
+//         settle = () => {
+//             if(willResolve){
+//                 resolve(value);
+//             }
+//             else{
+//                 reject(value);
+//             }
+//         }
+//         timeoutId = setTimeout(settle, ms);
+//     });
+
+//     delayPromise.clear = () => {
+//         clearTimeout(timeoutId);
+//         timeoutId = null;
+//         settle();
+//     };
+//     return delayPromise;
+// }
+
+// const createWithTimers = () => {
+//     const delay = createDelay1({willResolve: true});
+//     delay.reject = createDelay1({willResolve: false});
+//     delay.range = (minimum, maximum, options) => delay(randomInteger(minimum, maximum), options);
+//     return delay;
+// }
+// const delay5 = createWithTimers();
+
+// (async () => {
+//     const delayedPromise = delay5(3000, {value: '我是若川'});
+
+//     // await delayedPromise
+//     debugger
+//     setTimeout(() => {
+//         delayedPromise.clear();
+//     }, 300);
+
+//     // 300 milliseconds later
+//     console.log(await delayedPromise);
+//     //=> '我是若川'
+// })();
+
+
+
+
+  // 分割线------------------
+  (async () => {
+    const abortController = new AbortController();
+
+    setTimeout(() => {
+        abortController.abort();
+    }, 500);
+
+    try {
+        await delay6(1000, {signal: abortController.signal});
+    } catch (error) {
+        // 500 milliseconds later
+        console.log(error.name)
+        //=> 'AbortError'
+    }
+})();
+
+
+const createAbortError = () => {
+	const error = new Error('Delay aborted');
+	error.name = 'AbortError';
+	return error;
+};
+
+const createDelay6 = ({willResolve}) => (ms, {value, signal} = {}) => {
+    if (signal && signal.aborted) {
+		return Promise.reject(createAbortError());
+	}
+
+    let timeoutId;
+    let settle;
+    let rejectFn;
+    const signalListener = () => {
+        clearTimeout(timeoutId);
+        rejectFn(createAbortError());
+    }
+    const cleanup = () => {
+		if (signal) {
+			signal.removeEventListener('abort', signalListener);
+		}
+	};
+    const delayPromise = new Promise((resolve, reject) => {
+        settle = () => {
+			cleanup();
+			if (willResolve) {
+				resolve(value);
+			} else {
+				reject(value);
+			}
+		};
+
+        rejectFn = reject;
+        timeoutId = setTimeout(settle, ms);
+    });
+    
+    if (signal) {
+		signal.addEventListener('abort', signalListener, {once: true});
+	}
+
+    delayPromise.clear = () => {
+		clearTimeout(timeoutId);
+		timeoutId = null;
+		settle();
+	};
+
+    return delayPromise;
+}
+
+const createWithTimers = () => {
+    const delay = createDelay6({willResolve: true});
+    delay.reject = createDelay6({willResolve: false});
+    delay.range = (minimum, maximum, options) => delay(randomInteger(minimum, maximum), options);
+    return delay;
+}
+const delay6 = createWithTimers();
+
+    </script>
+</body>
+</html>
